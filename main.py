@@ -1,8 +1,12 @@
-import requests, json, csv
+import csv
+import json
+
+import requests
+
 from logger import logger
 
-base_url = "https://jsonplaceholder.typicode.com/"
-stat_file = "stat.csv"
+BASE_URL = "https://jsonplaceholder.typicode.com/"
+STAT_FILE = "stat.csv"
 
 
 def decorator_save_json_to_file(fun):
@@ -22,11 +26,12 @@ def decorator_save_json_to_file(fun):
 
 @decorator_save_json_to_file
 def get_data(path):
-    response = requests.get(base_url + path)
+    response = requests.get(BASE_URL + path)
     if response.status_code == 200:
         return response.json()
     else:
-        logger.error(f"Error code: {response.status_code}. Error message:  {response.text}")
+        logger.error(f"Error code: {response.status_code}. "
+                     f"Error message:  {response.text}")
         return None
 
 
@@ -36,7 +41,8 @@ def count_posts_by_user(posts):
         return {}
     for post in posts:
         user_id = post["userId"]
-        user_counts[user_id] = user_counts[user_id] + 1 if user_id in user_counts else 0
+        user_counts[user_id] = user_counts[user_id] + 1 \
+            if user_id in user_counts else 1
     return user_counts
 
 
@@ -47,12 +53,16 @@ def print_stat(posts, users):
         for user in users:
             user_id = user["id"]
             logger.info(
-                f"Id: {user_id}, Name: {user["name"]},  Username:  {user["username"]},  Posts:  {user_counts[user_id] if user_id in user_counts else 0}")
+                f"Id: {user_id}, "
+                f"Name: {user["name"]},  "
+                f"Username:  {user["username"]},  "
+                f"Posts:  "
+                f"{user_counts[user_id] if user_id in user_counts else 0}")
 
 
 def save_stat(posts, users):
     user_counts = count_posts_by_user(posts)
-    with open(stat_file, "w", newline='') as file:
+    with open(STAT_FILE, "w", newline='') as file:
         writer = csv.writer(file)
         row = ["id", "name", "username", "posts"]
         writer.writerow(row)
@@ -60,7 +70,7 @@ def save_stat(posts, users):
             for user in users:
                 row = get_stat_row(user, user_counts)
                 writer.writerow(row)
-    logger.debug(f"Posts by user were saved to file {stat_file}")
+    logger.debug(f"Posts by user were saved to file {STAT_FILE}")
 
 
 def get_stat_row(user, user_counts):
@@ -73,7 +83,8 @@ def get_stat_row(user, user_counts):
     return row
 
 
-users = get_data("users")
-posts = get_data("posts")
-print_stat(posts, users)
-save_stat(posts, users)
+if __name__ == "__main__":
+    returned_users = get_data("users")
+    returned_posts = get_data("posts")
+    print_stat(returned_posts, returned_users)
+    save_stat(returned_posts, returned_users)
